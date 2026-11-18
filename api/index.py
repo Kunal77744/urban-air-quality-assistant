@@ -35,13 +35,17 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, generic_exception_handler)
 
+    # Direct health check endpoint
+    @app.get("/api/health", tags=["Health"])
+    @app.get("/health", tags=["Health"])
+    def direct_health_check() -> dict[str, str]:
+        return {"status": "healthy", "version": APP_VERSION, "app": APP_NAME}
+
     # Routes with and without /api prefix
-    app.include_router(health.router, prefix="/api", tags=["Health"])
     app.include_router(geo.router, prefix="/api/geo", tags=["Geocoding"])
     app.include_router(aqi.router, prefix="/api/aqi", tags=["AirQuality"])
     app.include_router(plan.router, prefix="/api/plan", tags=["Planner"])
 
-    app.include_router(health.router, tags=["Health"])
     app.include_router(geo.router, prefix="/geo", tags=["Geocoding"])
     app.include_router(aqi.router, prefix="/aqi", tags=["AirQuality"])
     app.include_router(plan.router, prefix="/plan", tags=["Planner"])
