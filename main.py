@@ -62,6 +62,12 @@ def create_app() -> FastAPI:
     app.include_router(aqi.router, prefix="/api/aqi", tags=["AirQuality"])
     app.include_router(plan.router, prefix="/api/plan", tags=["Planner"])
 
+    # Fallback without /api prefix
+    app.include_router(health.router, tags=["Health"])
+    app.include_router(geo.router, prefix="/geo", tags=["Geocoding"])
+    app.include_router(aqi.router, prefix="/aqi", tags=["AirQuality"])
+    app.include_router(plan.router, prefix="/plan", tags=["Planner"])
+
     # Static UI Files
     app.mount("/", StaticFiles(directory="public", html=True), name="static")
 
