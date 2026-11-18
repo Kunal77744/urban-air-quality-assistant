@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Testing & Coverage
+.coverage
+.pytest_cache/
+cov_html/
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Environment & OS
+.env
+.DS_Store
+Thumbs.db
+*.log
