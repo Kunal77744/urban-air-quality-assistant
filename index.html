@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Air Quality Assistant</title>
+  <meta name="description" content="Science-backed low-emission daily routines, indoor air quality hacks, and direct impact explanations.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <header role="banner">
+    <div>
+      <h1 id="app-title">Urban Air Quality Assistant</h1>
+      <p id="app-desc">Low-Emission Daily Routines & Science-Based Indoor Hacks</p>
+    </div>
+    <button id="lang-toggle-btn" type="button" aria-label="Toggle language between English and Hindi">हिंदी में देखें</button>
+  </header>
+
+  <main id="main-content" role="main">
+    <section class="controls-card" aria-label="Planner Controls">
+      <div>
+        <label for="city-input">City / Location</label>
+        <input type="text" id="city-input" value="New Delhi" aria-required="true" autocomplete="address-level2">
+      </div>
+      <div>
+        <label for="commute-mode-select">Commute Mode</label>
+        <select id="commute-mode-select">
+          <option value="car">Car (Petrol/Diesel)</option>
+          <option value="motorcycle" selected>Motorcycle / Two-Wheeler</option>
+          <option value="auto">Auto Rickshaw</option>
+          <option value="bus">City Bus</option>
+          <option value="metro">Metro Rail</option>
+          <option value="cycle">Bicycle</option>
+          <option value="walk">Walking</option>
+        </select>
+      </div>
+      <div>
+        <label for="generate-plan-btn">&nbsp;</label>
+        <button id="generate-plan-btn" type="button">Update Plan</button>
+      </div>
+    </section>
+
+    <div id="results-container" aria-live="polite">
+      <!-- Dynamic cards rendered safely via textContent in render.js -->
+    </div>
+  </main>
+
+  <footer role="contentinfo">
+    <p>Impact calculations based on ARAI baseline emission factors and WHO indoor exposure reduction models. LLMs produce zero numerical metrics.</p>
+    <p>Health Disclaimer: This tool provides environmental exposure guidance, not direct medical counsel.</p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
