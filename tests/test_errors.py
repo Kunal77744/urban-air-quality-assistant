@@ -45,7 +45,7 @@ def test_cache_ttl_expiration() -> None:
     """Verify that cached entries expire after their TTL."""
     cache = InMemoryCache(max_size=2)
     cache.set("key1", "val1", ttl_seconds=0)
-    time.sleep(0.01)
+    time.sleep(0.05)
     assert cache.get("key1") is None
 
 

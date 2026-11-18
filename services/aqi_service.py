@@ -1,5 +1,7 @@
 """Air quality service querying Open-Meteo AQI API with memory caching."""
 
+from typing import Any
+
 import httpx
 
 from core.cache import global_aqi_cache
@@ -48,6 +50,46 @@ def _build_fallback_aqi(city: str, lat: float, lon: float) -> AirQualityData:
     )
 
 
+def _parse_aqi_data(
+    city: str, lat: float, lon: float, current: dict[str, Any]
+) -> AirQualityData:
+    """Construct AirQualityData model from API dictionary."""
+    aqi = int(current.get("us_aqi", 120))
+    category, _ = categorize_aqi(aqi)
+    return AirQualityData(
+        city=city,
+        latitude=lat,
+        longitude=lon,
+        aqi=aqi,
+        category=category,
+        pm2_5=float(current.get("pm2_5", 55.0)),
+        pm10=float(current.get("pm10", 90.0)),
+        source="Open-Meteo Live",
+        is_fallback=False,
+    )
+
+
+async def _fetch_live_aqi(
+    lat: float, lon: float, client: httpx.AsyncClient | None
+) -> dict[str, Any]:
+    """Query Open-Meteo API endpoint."""
+    params: dict[str, float | list[str]] = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": ["us_aqi", "pm2_5", "pm10"],
+    }
+    if client:
+        resp = await client.get(
+            OPEN_METEO_AQI_URL, params=params, timeout=DEFAULT_HTTP_TIMEOUT
+        )
+    else:
+        async with httpx.AsyncClient() as session:
+            resp = await session.get(
+                OPEN_METEO_AQI_URL, params=params, timeout=DEFAULT_HTTP_TIMEOUT
+            )
+    return resp.json().get("current", {}) if resp.status_code == 200 else {}
+
+
 async def get_air_quality(
     city: str,
     lat: float,
@@ -60,34 +102,12 @@ async def get_air_quality(
     if cached is not None:
         return cached  # type: ignore[no-any-return]
 
-    params: dict[str, float | list[str]] = {
-        "latitude": lat,
-        "longitude": lon,
-        "current": ["us_aqi", "pm2_5", "pm10"],
-    }
     try:
-        session = client if client else httpx.AsyncClient()
-        async with session:
-            resp = await session.get(
-                OPEN_METEO_AQI_URL, params=params, timeout=DEFAULT_HTTP_TIMEOUT
-            )
-            if resp.status_code == 200:
-                current = resp.json().get("current", {})
-                aqi = int(current.get("us_aqi", 120))
-                category, _ = categorize_aqi(aqi)
-                data = AirQualityData(
-                    city=city,
-                    latitude=lat,
-                    longitude=lon,
-                    aqi=aqi,
-                    category=category,
-                    pm2_5=float(current.get("pm2_5", 55.0)),
-                    pm10=float(current.get("pm10", 90.0)),
-                    source="Open-Meteo Live",
-                    is_fallback=False,
-                )
-                global_aqi_cache.set(cache_key, data, AQI_CACHE_TTL_SECONDS)
-                return data
+        current = await _fetch_live_aqi(lat, lon, client)
+        if current:
+            data = _parse_aqi_data(city, lat, lon, current)
+            global_aqi_cache.set(cache_key, data, AQI_CACHE_TTL_SECONDS)
+            return data
     except Exception as err:
         logger.warning("Air quality fetch failed: %s", err)
 

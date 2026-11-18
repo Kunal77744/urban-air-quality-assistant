@@ -32,7 +32,7 @@ class InMemoryCache:
             return None
 
         entry = self._store[key]
-        if time.monotonic() > entry.expires_at:
+        if time.monotonic() >= entry.expires_at:
             del self._store[key]
             self._misses += 1
             return None

@@ -39,19 +39,27 @@ def calculate_exposure_reduction_pct(
     use_wet_cleaning: bool = True,
 ) -> float:
     """Compute combined percentage reduction in indoor PM2.5 exposure."""
-    # Multiplicative survival model: (1 - E_total) = Product(1 - E_i)
-    multiplier = 1.0
+    mult = 1.0
     if use_vent_timing:
-        multiplier *= 1.0 - VENT_TIMING_REDUCTION
+        mult *= 1.0 - VENT_TIMING_REDUCTION
     if use_purifier_or_filter:
-        multiplier *= 1.0 - HEPA_PURIFIER_REDUCTION
+        mult *= 1.0 - HEPA_PURIFIER_REDUCTION
     if use_cooking_exhaust:
-        multiplier *= 1.0 - COOKING_VENT_REDUCTION
+        mult *= 1.0 - COOKING_VENT_REDUCTION
     if use_wet_cleaning:
-        multiplier *= 1.0 - WET_CLEANING_REDUCTION
+        mult *= 1.0 - WET_CLEANING_REDUCTION
+    return min(95.0, round((1.0 - mult) * 100.0, 1))
 
-    reduction_pct = (1.0 - multiplier) * 100.0
-    return min(95.0, round(reduction_pct, 1))
+
+def _format_impact_basis(curr: str, alt: str, km: float) -> str:
+    """Format emission calculation explanation string."""
+    f_curr = get_emission_factor(curr)
+    f_alt = get_emission_factor(alt)
+    return (
+        f"CO2 savings calculated using ARAI baseline: "
+        f"{curr} ({f_curr}g/km) vs {alt} ({f_alt}g/km) "
+        f"over {km * 2:.1f} km roundtrip."
+    )
 
 
 def build_impact_summary(
@@ -65,18 +73,11 @@ def build_impact_summary(
         current_mode, alternative_mode, commute_distance_km
     )
     annual_kg = round((daily_g * working_days_per_year) / 1000.0, 1)
-    reduction_pct = calculate_exposure_reduction_pct()
-
-    basis = (
-        f"CO2 savings calculated using ARAI baseline: "
-        f"{current_mode} ({get_emission_factor(current_mode)}g/km) vs "
-        f"{alternative_mode} ({get_emission_factor(alternative_mode)}g/km) "
-        f"over {commute_distance_km * 2:.1f} km roundtrip."
-    )
+    basis = _format_impact_basis(current_mode, alternative_mode, commute_distance_km)
 
     return ImpactSummary(
         daily_co2_saved_grams=daily_g,
         annual_co2_saved_kg=annual_kg,
-        exposure_reduction_pct=reduction_pct,
+        exposure_reduction_pct=calculate_exposure_reduction_pct(),
         calculation_basis=basis,
     )
